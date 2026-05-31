@@ -1,0 +1,1 @@
+This fake file demonstrates that sensitive-looking filenames are held without preview.
