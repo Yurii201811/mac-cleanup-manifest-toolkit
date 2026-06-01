@@ -23,6 +23,12 @@ classifiers = [
   "Topic :: Utilities",
 ]
 
+[project.urls]
+Homepage = "https://github.com/Yurii201811/mac-cleanup-manifest-toolkit"
+Repository = "https://github.com/Yurii201811/mac-cleanup-manifest-toolkit"
+Issues = "https://github.com/Yurii201811/mac-cleanup-manifest-toolkit/issues"
+Changelog = "https://github.com/Yurii201811/mac-cleanup-manifest-toolkit/blob/main/CHANGELOG.md"
+
 [project.optional-dependencies]
 test = ["pytest>=8"]
 
@@ -34,6 +40,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
 
 [tool.ruff]
 line-length = 100

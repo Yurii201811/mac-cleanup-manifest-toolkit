@@ -1,5 +1,9 @@
 # Mac Cleanup Manifest Toolkit
 
+[![CI](https://github.com/Yurii201811/mac-cleanup-manifest-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/Yurii201811/mac-cleanup-manifest-toolkit/actions/workflows/ci.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 Manifest-first file cleanup for cautious rename and move workflows.
 
 This toolkit helps you inspect messy folders, generate reviewable TSV manifests,
@@ -17,6 +21,14 @@ batch should be auditable before anything moves.
 - Applies only approved move or rename rows.
 - Writes undo manifests for rollback.
 - Scans repositories or manifests for obvious secrets and private local paths.
+
+## Project Signals
+
+- Public-safe sample inbox with fake files and sensitive-filename examples.
+- Dry-run-first CLI with explicit approval gates before moving files.
+- Tests cover scanning, rename suggestions, manifest execution, and secret scans.
+- CI checks Python 3.11 and 3.12.
+- MIT licensed with privacy, architecture, workflow, and manifest-format docs.
 
 ## Install
 
@@ -89,6 +101,15 @@ The repository includes only fake sample data. Generated manifests should use
 relative paths and should be reviewed before sharing. Do not publish personal
 cleanup logs, raw file previews, full local paths, tokens, private documents, or
 undo scripts generated from your real machine.
+
+## Documentation
+
+- [Architecture](docs/architecture.md)
+- [Workflow guide](docs/workflow.md)
+- [Manifest format](docs/manifest-format.md)
+- [Privacy and safety](docs/privacy.md)
+- [Roadmap](docs/roadmap.md)
+- [Changelog](CHANGELOG.md)
 
 ## Status
 
