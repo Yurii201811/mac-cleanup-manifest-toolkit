@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+- Preflighted complete undo manifests before mutation, including APFS-equivalent
+  and cross-set path collisions, so invalid rollback plans fail closed.
 - Rejected directory moves into their own descendants before execution can
   create nested paths or mutate the source tree.
 - Added public repository polish: README quality signals, documentation links,

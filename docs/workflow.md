@@ -37,4 +37,9 @@ undo TSV beside the manifest unless `--undo-out` is provided.
 ## 5. Undo
 
 Run `mac-cleanup undo UNDO_TSV --root ROOT` first for a dry-run, then add
-`--execute` after review.
+`--execute` after review. Undo preflights every row before the first move and
+fails closed on missing, duplicate, or overlapping rollback paths—including
+case and Unicode aliases common on APFS—so an invalid later row cannot leave an
+earlier row partially undone. Filesystem races or permission failures during
+execution can still produce a partial undo; keep the undo TSV until the restored
+paths have been checked.
