@@ -12,6 +12,7 @@ source_path	action	destination	proposed_name	gate	confidence	reason
 - Absolute paths are rejected by default.
 - `..` path traversal is rejected.
 - Destinations must stay under the root.
+- A directory cannot be moved into one of its own descendants.
 - `proposed_name` must be a single filename or directory name, not a path.
 
 ## Actions

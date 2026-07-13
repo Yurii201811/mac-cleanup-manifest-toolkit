@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+- Rejected directory moves into their own descendants before execution can
+  create nested paths or mutate the source tree.
 - Added public repository polish: README quality signals, documentation links,
   package project URLs, GitHub issue templates, and a pull request template.
 - Fixed direct local test discovery by adding `src` to the pytest import path.
