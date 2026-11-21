@@ -3,7 +3,7 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-from .paths import ensure_single_name, resolve_input_path
+from .paths import ensure_single_name, is_relative_to, resolve_input_path
 
 
 FIELDS = ["source_path", "action", "destination", "proposed_name", "gate", "confidence", "reason"]
@@ -70,6 +70,8 @@ def validate_manifest(
             continue
         if target == source:
             errors.append(f"row {index}: target is the same as source")
+        if source.is_dir() and target != source and is_relative_to(target, source):
+            errors.append(f"row {index}: target is inside source directory")
         if target.exists():
             errors.append(f"row {index}: target already exists: {target.relative_to(root).as_posix()}")
         if target in executable_targets:

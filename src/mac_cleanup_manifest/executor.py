@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import unicodedata
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
@@ -26,6 +27,17 @@ def is_child_of(path: Path, parent: Path) -> bool:
     except ValueError:
         return False
     return path.resolve() != parent.resolve()
+
+
+def path_identity(path: Path) -> tuple[str, ...]:
+    return tuple(unicodedata.normalize("NFC", part).casefold() for part in path.resolve().parts)
+
+
+def paths_overlap(first: Path, second: Path) -> bool:
+    first_parts = path_identity(first)
+    second_parts = path_identity(second)
+    shared_length = min(len(first_parts), len(second_parts))
+    return first_parts[:shared_length] == second_parts[:shared_length]
 
 
 def apply_manifest(
@@ -89,17 +101,9 @@ def undo_manifest(
     allow_absolute: bool = False,
 ) -> list[ApplyRecord]:
     rows = read_tsv(undo_path)
+    plan = plan_undo(rows, root, allow_absolute=allow_absolute)
     records: list[ApplyRecord] = []
-    for index, row in enumerate(rows, start=2):
-        try:
-            current = resolve_input_path(root, row["current_path"], allow_absolute=allow_absolute)
-            original = resolve_input_path(root, row["original_path"], allow_absolute=allow_absolute)
-        except KeyError as exc:
-            raise ValueError(f"row {index}: missing undo column: {exc}") from exc
-        if not current.exists():
-            raise ValueError(f"row {index}: current path does not exist: {row['current_path']}")
-        if original.exists():
-            raise ValueError(f"row {index}: original path already exists: {row['original_path']}")
+    for current, original in plan:
         if execute:
             original.parent.mkdir(parents=True, exist_ok=True)
             current.rename(original)
@@ -108,6 +112,89 @@ def undo_manifest(
             status = "would_undo"
         records.append(ApplyRecord(safe_rel(current, root), safe_rel(original, root), "undo", status, "undo manifest row"))
     return records
+
+
+def plan_undo(
+    rows: list[dict[str, str]],
+    root: Path,
+    *,
+    allow_absolute: bool = False,
+) -> list[tuple[Path, Path]]:
+    if not rows:
+        raise ValueError("undo manifest has no data rows")
+
+    errors: list[str] = []
+    plan: list[tuple[Path, Path]] = []
+    current_rows: dict[tuple[str, ...], tuple[Path, int]] = {}
+    original_rows: dict[tuple[str, ...], tuple[Path, int]] = {}
+    for index, row in enumerate(rows, start=2):
+        current_value = (row.get("current_path") or "").strip()
+        original_value = (row.get("original_path") or "").strip()
+        if not current_value:
+            errors.append(f"row {index}: missing undo column: current_path")
+        if not original_value:
+            errors.append(f"row {index}: missing undo column: original_path")
+        if not current_value or not original_value:
+            continue
+        try:
+            current = resolve_input_path(root, current_value, allow_absolute=allow_absolute)
+            original = resolve_input_path(root, original_value, allow_absolute=allow_absolute)
+        except ValueError as exc:
+            errors.append(f"row {index}: {exc}")
+            continue
+
+        if not current.exists():
+            errors.append(f"row {index}: current path does not exist: {current_value}")
+        if original.exists():
+            errors.append(f"row {index}: original path already exists: {original_value}")
+        current_key = path_identity(current)
+        original_key = path_identity(original)
+        if current_key in current_rows:
+            errors.append(
+                f"row {index}: duplicate current path also used by row {current_rows[current_key][1]}"
+            )
+        if original_key in original_rows:
+            errors.append(
+                f"row {index}: duplicate original path also used by row {original_rows[original_key][1]}"
+            )
+        for previous_current, previous_index in current_rows.values():
+            if current_key != path_identity(previous_current) and paths_overlap(
+                current, previous_current
+            ):
+                errors.append(
+                    f"row {index}: current path overlaps row {previous_index}: {current_value}"
+                )
+                break
+        for previous_original, previous_index in original_rows.values():
+            if original_key != path_identity(previous_original) and paths_overlap(
+                original, previous_original
+            ):
+                errors.append(
+                    f"row {index}: original path overlaps row {previous_index}: {original_value}"
+                )
+                break
+        for previous_current, previous_index in current_rows.values():
+            if paths_overlap(original, previous_current):
+                errors.append(
+                    f"row {index}: original path overlaps current path from row {previous_index}"
+                )
+                break
+        for previous_original, previous_index in original_rows.values():
+            if paths_overlap(current, previous_original):
+                errors.append(
+                    f"row {index}: current path overlaps original path from row {previous_index}"
+                )
+                break
+        if paths_overlap(current, original):
+            errors.append(f"row {index}: current and original paths overlap")
+
+        current_rows[current_key] = (current, index)
+        original_rows[original_key] = (original, index)
+        plan.append((current, original))
+
+    if errors:
+        raise ValueError("\n".join(errors))
+    return plan
 
 
 def write_undo_manifest(path: Path, rows: list[dict[str, str]]) -> None:
