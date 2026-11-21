@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## Unreleased
+## 0.2.0 - 2026-11-21
 
 - Preflighted complete undo manifests before mutation, including APFS-equivalent
   and cross-set path collisions, so invalid rollback plans fail closed.
